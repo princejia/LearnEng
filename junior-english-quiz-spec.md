@@ -65,6 +65,17 @@
 
 ## 2. 数据库设计
 
+> **实现状态**：项目采用「mock 优先」架构，数据访问统一走 `lib/data/repository.ts` 的 `Repository` 接口。
+> - `DATA_SOURCE=mock`（缺省）：使用内存 mock 题库，无需任何后端即可运行。
+> - `DATA_SOURCE=supabase` 且配置好三项环境变量：自动切换到 `supabaseRepository`（`lib/data/supabase-repository.ts`）。
+>
+> **接入 Supabase 步骤**：
+> 1. 在 Supabase 控制台 → SQL Editor 执行 `supabase/schema.sql`（建表 + RLS + 话题种子）。
+> 2. 把 `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` 填入 `.env.local`，并将 `DATA_SOURCE` 改为 `supabase`。
+> 3. 启动后 `POST /api/admin/seed` 把示例题库导入数据库（幂等，可重复执行）。
+>
+> 服务端通过 Service Role Key 访问（绕过 RLS），以支持游客练习流程。
+
 ### 2.1 题库相关表
 
 ```sql
@@ -223,9 +234,17 @@ CREATE POLICY "owner only" ON answer_records FOR ALL
 │   ├── supabase/
 │   │   ├── client.ts                 # 浏览器端 client
 │   │   ├── server.ts                 # 服务端 client
+│   │   ├── admin.ts                  # Service Role admin client（绕过 RLS）
 │   │   └── middleware.ts             # Auth middleware
+│   ├── data/
+│   │   ├── repository.ts             # Repository 接口 + mock 实现 + 工厂
+│   │   ├── supabase-repository.ts    # Supabase 实现
+│   │   ├── builder.ts                # 由英文句子构建题目（tokens/blanks）
+│   │   └── mock-questions.ts         # 示例题库
 │   ├── tts.ts                        # TTS 生成工具（调用第三方API）
 │   └── utils.ts
+├── supabase/
+│   └── schema.sql                    # 建表 + RLS + 种子（在 SQL Editor 执行）
 ├── types/
 │   └── index.ts                      # 全局 TypeScript 类型
 └── middleware.ts                     # Next.js middleware（路由鉴权）

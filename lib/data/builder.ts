@@ -73,3 +73,27 @@ export function buildQuestion(raw: RawQuestion): Question {
     tokens,
   };
 }
+
+/**
+ * 根据英文句子 + 按顺序排列的填空答案，反推出被挖空的单词下标。
+ * 用于从数据库（仅存答案，不存下标）重建题目 tokens。
+ */
+export function deriveBlankWordIndexes(
+  english: string,
+  answersInOrder: string[],
+): number[] {
+  const words = splitWords(english);
+  const indexes: number[] = [];
+  let cursor = 0;
+  for (const ans of answersInOrder) {
+    for (let i = cursor; i < words.length; i += 1) {
+      const core = words[i].match(/^([A-Za-z'’-]+)/)?.[1] ?? words[i];
+      if (core.toLowerCase() === ans.toLowerCase()) {
+        indexes.push(i);
+        cursor = i + 1;
+        break;
+      }
+    }
+  }
+  return indexes;
+}

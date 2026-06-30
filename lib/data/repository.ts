@@ -8,6 +8,7 @@ import type {
 } from "@/types";
 import { shuffle, uuid } from "@/lib/utils";
 import { MOCK_QUESTIONS, MOCK_TOPICS } from "./mock-questions";
+import { supabaseRepository } from "./supabase-repository";
 
 export interface CreateSessionInput {
   grade?: number;
@@ -134,9 +135,12 @@ const mockRepository: Repository = {
 
 export function getRepository(): Repository {
   const source = process.env.DATA_SOURCE ?? "mock";
-  if (source === "supabase" && process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    // TODO: 接入 Supabase 后在此返回 supabaseRepository
-    // return supabaseRepository;
+  if (
+    source === "supabase" &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    return supabaseRepository;
   }
   return mockRepository;
 }
