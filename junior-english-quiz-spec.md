@@ -87,7 +87,7 @@
 -- 题目主表
 CREATE TABLE questions (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  chinese     text NOT NULL,                  -- 中文句子
+  chinese     text NOT NULL,                  -- 中文句子/词义
   english     text NOT NULL,                  -- 完整英文句子
   audio_url   text,                           -- Supabase Storage 音频地址
   grade       smallint NOT NULL,              -- 年级 6/7/8/9
@@ -208,7 +208,11 @@ CREATE POLICY "owner only" ON answer_records FOR ALL
 │       ├── sessions/route.ts         # 会话管理
 │       ├── answers/route.ts          # 答题提交
 │       ├── audio/generate/route.ts   # TTS 生成
-│       └── hints/route.ts            # 提示次数校验
+│       ├── hints/route.ts            # 提示次数校验
+│       └── admin/
+│           ├── seed/route.ts         # 导入示例题库（mock → Supabase）
+│           ├── import-words/route.ts # 导入 eng.pdf 词库（eng-words.json）
+│           └── clear-sample/route.ts # 清除示例话题题，仅保留词库
 ├── components/
 │   ├── nav/
 │   │   ├── TopNav.tsx                # 顶部导航栏（5个按钮）
@@ -216,7 +220,7 @@ CREATE POLICY "owner only" ON answer_records FOR ALL
 │   │   ├── ModeSelector.tsx          # 练习模式选择
 │   │   └── ProgressBar.tsx           # 进度条组件
 │   ├── practice/
-│   │   ├── QuestionCard.tsx          # 题目卡片（中文句子）
+│   │   ├── QuestionCard.tsx          # 题目卡片（中文句子/词义）
 │   │   ├── BlankInput.tsx            # 单个填空框
 │   │   ├── BlankRow.tsx              # 一行所有填空框
 │   │   ├── AudioPlayer.tsx           # 音频播放按钮
@@ -250,6 +254,10 @@ CREATE POLICY "owner only" ON answer_records FOR ALL
 │   └── utils.ts
 ├── supabase/
 │   └── schema.sql                    # 建表 + RLS + 种子（在 SQL Editor 执行）
+├── scripts/
+│   ├── extract_pdf.py                # 抽取课文英文句子（备用）
+│   ├── parse_wordlist.py             # 解析按单元生词表 → eng-words.json
+│   └── eng-words.json                # 译林版六上词库（158 条，Unit 1–8）
 ├── types/
 │   └── index.ts                      # 全局 TypeScript 类型
 └── middleware.ts                     # Next.js middleware（路由鉴权）
@@ -306,7 +314,7 @@ const accuracy = correctCount / Math.max(answeredCount, 1);
 │  [TopNav]  固定顶部                       │
 ├─────────────────────────────────────────┤
 │                                         │
-│   📋 中文句子（大字体，居中）              │  ← QuestionCard
+│   📋 中文句子/词义（大字体，居中）            │  ← QuestionCard
 │                                         │
 │   __ __ __ __ __ __ __                  │  ← BlankRow（填空框组）
 │                                         │
@@ -323,7 +331,7 @@ const accuracy = correctCount / Math.max(answeredCount, 1);
 
 ```tsx
 interface QuestionCardProps {
-  chinese: string;    // 中文句子
+  chinese: string;    // 中文句子/词义
   questionNo: number; // 第几题
   totalCount: number;
 }
@@ -675,6 +683,25 @@ POST /api/hints/use
   → { success: boolean, remaining: number }
 ```
 
+### 10.5 管理/数据导入接口（已实现）
+
+```
+POST /api/admin/seed
+  → 把 mock 示例题库（MOCK_QUESTIONS/MOCK_TOPICS）幂等导入 Supabase
+  → { topics: number, questions: number, blanks: number }
+
+POST /api/admin/import-words
+  → 读取 scripts/eng-words.json，按「看中文→拼英文」生成全挖空题，
+    确定性 id 幂等可重导（upsert 题目 + 重建填空框）
+  → { questions: number, blanks: number }
+
+POST /api/admin/clear-sample
+  → 删除 topic 非空的示例话题题（连带 answer_records），仅保留词库题
+  → { deleted: number }
+```
+
+> 服务端通过 Service Role Key 访问数据库，绕过 RLS。
+
 ---
 
 ## 11. 响应式与性能要求
@@ -683,8 +710,8 @@ POST /api/hints/use
 
 | 设备 | 宽度 | 适配重点 |
 |---|---|---|
-| 手机 | < 640px | 填空框自动换行，底部快捷键折叠，字体放大 |
-| 平板 | 640–1024px | 两列布局，快捷键展开显示 |
+| 手机 | < 640px | 顶部导航栏换行、进度条独占一行，填空框自动换行，底部快捷键栏**隐藏**（`hidden sm:block`，触屏用不到物理键），字体放大 |
+| 平板 | 640–1024px | 两列布局，快捷键栏展开显示 |
 | 桌面 | > 1024px | 完整布局，所有功能展示 |
 
 ### 11.2 性能目标
@@ -730,6 +757,13 @@ const { data } = await supabase
 ---
 
 ## 13. 开发阶段划分
+
+> **当前实现状态（2026-06）**：项目已脚手架完成并 **部署上线（Vercel）**。
+> - ✅ 数据访问层（Repository：mock / Supabase 双实现）、Supabase 建表 + RLS、示例题库导入。
+> - ✅ 核心答题页（填空框、提交批改、跳题、提示、音频降级 TTS）、顶部导航栏、全局快捷键、进度条、IndexedDB 本地缓存。
+> - ✅ eng.pdf 词库导入（译林版六上，158 题 / Unit 1–8），已清除示例话题题，**当前题库仅词库内容**。
+> - ✅ 全端响应式适配（导航栏换行、手机隐藏快捷键栏）。
+> - ⏳ **Auth 尚未接入**：当前为游客练习流程（服务端 Service Role 直连），登录/云同步/错题本/后台管理 UI 为后续迭代。
 
 ### Sprint 1（Week 1–2）：数据库 + 题库管理
 
@@ -784,5 +818,6 @@ ADMIN_HINT_DAILY_LIMIT=10          # 每日全提示上限
 
 ---
 
-*文档版本：v1.0 · 生成日期：2026-06*  
+*文档版本：v1.1 · 更新日期：2026-06*  
+*v1.1 变更：补充已实现的 admin 数据导入接口、scripts 词库脚本、移动端适配说明与上线状态。*  
 *如需前端页面分层结构文档（组件树 + 状态流转图），可单独输出。*
