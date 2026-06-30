@@ -12,7 +12,7 @@ const SHORTCUTS = [
 
 export function ShortcutBar() {
   return (
-    <footer className="sticky bottom-0 z-20 border-t border-gray-200 bg-white/90 backdrop-blur">
+    <footer className="sticky bottom-0 z-20 hidden border-t border-gray-200 bg-white/90 backdrop-blur sm:block">
       <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2">
         {SHORTCUTS.map((s) => (
           <span key={s.keys} className="flex items-center gap-1 text-xs text-gray-500">

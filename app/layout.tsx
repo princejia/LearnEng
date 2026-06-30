@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "初中英语拆句填空练习",
-  description: "Grade 7–9 英语拆句填空练习网站",
+  title: "小学初中英语拆句填空练习",
+  description: "小学六年级 ~ 初中（Grade 6–9）英语拆句填空练习网站",
 };
 
 export const viewport: Viewport = {

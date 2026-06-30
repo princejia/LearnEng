@@ -26,37 +26,40 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex max-w-4xl items-center gap-2 px-4 py-2.5">
-        <Link href="/practice" className="mr-2 text-base font-bold text-blue-600">
+      <nav className="mx-auto flex max-w-4xl flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2 sm:px-4 sm:py-2.5">
+        <Link
+          href="/practice"
+          className="mr-1 text-sm font-bold text-blue-600 sm:mr-2 sm:text-base"
+        >
           英语拆句填空
         </Link>
 
         <button
           onClick={() => setFilterOpen(true)}
-          className="rounded-lg px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          className="rounded-lg px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 sm:px-3 sm:py-1.5 sm:text-sm"
         >
           学习内容
         </button>
         <button
           onClick={() => setModeOpen(true)}
-          className="rounded-lg px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          className="rounded-lg px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 sm:px-3 sm:py-1.5 sm:text-sm"
         >
           练习模式
         </button>
         <button
           onClick={togglePause}
-          className="rounded-lg px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          className="rounded-lg px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 sm:px-3 sm:py-1.5 sm:text-sm"
         >
           {isPaused ? "继续练习" : "暂停练习"}
         </button>
         <button
           onClick={handleReset}
-          className="rounded-lg px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          className="rounded-lg px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 sm:px-3 sm:py-1.5 sm:text-sm"
         >
           重置进度
         </button>
 
-        <div className="ml-auto">
+        <div className="order-last w-full sm:order-none sm:ml-auto sm:w-auto">
           <ProgressBar
             completedCount={answeredCount}
             totalCount={questions.length}
