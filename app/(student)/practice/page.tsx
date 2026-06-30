@@ -23,7 +23,7 @@ function parseFilter(sp: URLSearchParams): QuestionFilter {
     unit: num("unit"),
     topic: sp.get("topic") ?? undefined,
     difficulty: num("difficulty") as QuestionFilter["difficulty"],
-    shuffle: sp.get("shuffle") === "true",
+    shuffle: sp.get("shuffle") !== "false",
     limit: num("limit") ?? 20,
   };
 }
