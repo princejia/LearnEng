@@ -76,6 +76,11 @@
 >
 > 服务端通过 Service Role Key 访问（绕过 RLS），以支持游客练习流程。
 
+> **词库导入（eng.pdf）**：译林版六年级上册课本的「Word lists 生词表」是现成的中英对照词库（英文词/短语 + 中文释义 + 单元）。
+> - `scripts/extract_pdf.py`：抽取课文英文句子（备用）。
+> - `scripts/parse_wordlist.py`：解析「按单元」生词表 → `scripts/eng-words.json`（158 条，覆盖 Unit 1–8）。
+> - `POST /api/admin/import-words`：把 `eng-words.json` 导入 Supabase，生成「看中文释义→拼英文单词/短语」的填空题（全挖空，确定性 id 幂等可重导）。
+
 ### 2.1 题库相关表
 
 ```sql
